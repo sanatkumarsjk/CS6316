@@ -3,39 +3,37 @@ import numpy as np
 import urllib.request
 from sklearn.model_selection import train_test_split
 
-DATA_FILENAME = "Police_Calls_for_Service.csv"
+RAW_DATA_FILENAME = "Police_Calls_for_Service.csv"
 DATA_URL = "https://data.vbgov.com/api/views/7gep-fpmg/rows.csv?accessType=DOWNLOAD"
+CLEAN_DATA_FILENAME = "Clean_Data.csv"
+
 
 #Load in data, downloading datafile if necessary
 try:
-    data = pd.read_csv(DATA_FILENAME)
+    data = pd.read_csv(RAW_DATA_FILENAME)
 except:
     # Download file
-    response = input(DATA_FILENAME + " not found. Do you wish to download this file? (Y/N) ")
+    response = input(RAW_DATA_FILENAME + " not found. Do you wish to download this file? (Y/N) ")
 
     if response == "Y":
         print("Downloading...")
-        urllib.request.urlretrieve(DATA_URL, DATA_FILENAME)
-        print("Downloaded", DATA_FILENAME)
+        urllib.request.urlretrieve(DATA_URL, RAW_DATA_FILENAME)
+        print("Downloaded", RAW_DATA_FILENAME)
     elif response == "N":
         print("Ending program")
     else:
         print("Unrecognized input. Ending program")
 
 # Drop the features we're not using
+print("Dropping unused features")
 dropped_features = ["Incident Number", "Report Number", "Subdivision", "Entry Date/Time",
                     "Dispatch Date/Time", "En Route Date/Time", "On Scene Date/Time",
                     "Close Date/Time", "Location"]
 data = data.drop(dropped_features, axis=1)
 
-#reading specific column in CSV
-#def readCsv(filename):
-#    data = pd.read_csv(filename)
-#    return data
-#call_time = readCsv("extractedData.csv")["Call Date/Time"].values
+# Separating call_time into date month and time(hours)
+print("Separating Call Date/Time into Date, Month, and Time")
 call_time = data["Call Date/Time"].values
-
-#seperating call_time into date month and time(hours)
 date = []
 month = []
 time = []
@@ -49,9 +47,10 @@ def seperateDate(d):
 for i in call_time:
     seperateDate(str(i))
 
-#writing the transfromed call time to CSV
+data = data.drop(["Call Date/Time"], axis = 1)
+
+# Writing the transformed call time to CSV
 def writeCsv():
-    #data = readCsv("extractedData.csv")
     data['Call_Date'] = date
     data['Call_Month'] = month
     data['Call_Time'] = time
@@ -60,6 +59,8 @@ def writeCsv():
 writeCsv()
 
 # Drop rows containing incomplete data
+# Note: This dataset uses a year of 1899 to indicate a missing date
+print("Dropping rows with incomplete data")
 rows_to_drop = []
 dropped_because_year = 0
 dropped_because_noreport = 0
@@ -71,10 +72,16 @@ for index, row in data.iterrows():
         rows_to_drop.append(index)
         dropped_because_year += 1
         
-data = data.drop(rows_to_drop, axis=0)
+data = data.drop(rows_to_drop, axis = 0)
+data = data.drop(["Call_Year"], axis = 1) #don't need year anymore
 data.to_csv("transformed_and_dropped.csv")
+
 print("Dropped", len(rows_to_drop), "rows:")
 print("  ", dropped_because_year, " due to year", sep="")
 print("  ", dropped_because_noreport, " due to No Report", sep="")
 
-# TODO: Add One Hot Encoding for Categorical Data
+#Do One Hot Encoding
+print("Performing One Hot Encoding")
+data_prepared = pd.get_dummies(data, columns=["Call Type", "Case Disposition"])
+data_prepared.to_csv(CLEAN_DATA_FILENAME)
+print("Saved clean data to", CLEAN_DATA_FILENAME)
