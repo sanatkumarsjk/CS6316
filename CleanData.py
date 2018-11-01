@@ -19,6 +19,8 @@ except:
         print("Downloading...")
         urllib.request.urlretrieve(DATA_URL, RAW_DATA_FILENAME)
         print("Downloaded", RAW_DATA_FILENAME)
+        
+        data = pd.read_csv(RAW_DATA_FILENAME)
     elif response == "N":
         print("Ending program")
     else:
@@ -82,6 +84,6 @@ print("  ", dropped_because_noreport, " due to No Report", sep="")
 
 #Do One Hot Encoding
 print("Performing One Hot Encoding")
-data_prepared = pd.get_dummies(data, columns=["Call Type", "Case Disposition"])
+data_prepared = pd.get_dummies(data, columns=["Zone", "Call Type", "Case Disposition"])
 data_prepared.to_csv(CLEAN_DATA_FILENAME)
 print("Saved clean data to", CLEAN_DATA_FILENAME)
