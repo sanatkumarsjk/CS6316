@@ -28,9 +28,9 @@ except:
 
 # Drop the features we're not using
 print("Dropping unused features")
-dropped_features = ["Incident Number", "Report Number", "Subdivision", "Entry Date/Time",
+dropped_features = ["Incident Number", "Subdivision", "Report Number", "Entry Date/Time",
                     "Dispatch Date/Time", "En Route Date/Time", "On Scene Date/Time",
-                    "Close Date/Time", "Location"]
+                    "Close Date/Time", "Call Type", "Case Disposition"]
 data = data.drop(dropped_features, axis=1)
 
 # Separating call_time into date month and time(hours)
@@ -41,7 +41,8 @@ month = []
 time = []
 year = []
 def seperateDate(d):
-    time.append( d[len(d)- 5 : len(d)-3] )
+    #time.append( d[len(d)- 11 : len(d)-9] )
+    time.append(d.split(" ")[1].split(":")[0])
     date.append(d.split("/", 3)[1])
     month.append(d.split("/",3)[0])
     year.append(d.split("/", 3)[2].split(" ")[0])
@@ -62,28 +63,29 @@ writeCsv()
 
 # Drop rows containing incomplete data
 # Note: This dataset uses a year of 1899 to indicate a missing date
-print("Dropping rows with incomplete data")
-rows_to_drop = []
-dropped_because_year = 0
-dropped_because_noreport = 0
-for index, row in data.iterrows():
-    if row["Case Disposition"] == "No Report":
-        rows_to_drop.append(index)
-        dropped_because_noreport += 1
-    elif row["Call_Year"] == 1899:
-        rows_to_drop.append(index)
-        dropped_because_year += 1
+#print("Dropping rows with incomplete data")
+#rows_to_drop = []
+#dropped_because_year = 0
+#dropped_because_noreport = 0
+#for index, row in data.iterrows():
+#    if row["Case Disposition"] == "No Report":
+#        rows_to_drop.append(index)
+#        dropped_because_noreport += 1
+#    elif row["Call_Year"] == 1899:
+#        rows_to_drop.append(index)
+#        dropped_because_year += 1
         
-data = data.drop(rows_to_drop, axis = 0)
-data = data.drop(["Call_Year"], axis = 1) #don't need year anymore
-data.to_csv("transformed_and_dropped.csv")
-
-print("Dropped", len(rows_to_drop), "rows:")
-print("  ", dropped_because_year, " due to year", sep="")
-print("  ", dropped_because_noreport, " due to No Report", sep="")
+#data = data.drop(rows_to_drop, axis = 0)
+#data = data.drop(["Call_Year"], axis = 1) #don't need year anymore
+#data.to_csv("transformed_and_dropped.csv")
+#
+#print("Dropped", len(rows_to_drop), "rows:")
+#print("  ", dropped_because_year, " due to year", sep="")
+#print("  ", dropped_because_noreport, " due to No Report", sep="")
 
 #Do One Hot Encoding
-print("Performing One Hot Encoding")
-data_prepared = pd.get_dummies(data, columns=["Zone", "Call Type", "Case Disposition"])
-data_prepared.to_csv(CLEAN_DATA_FILENAME)
+#print("Performing One Hot Encoding")
+#data_prepared = pd.get_dummies(data, columns=["Zone"])
+data_prepared = data
+data_prepared.to_csv(CLEAN_DATA_FILENAME, index=False)
 print("Saved clean data to", CLEAN_DATA_FILENAME)
