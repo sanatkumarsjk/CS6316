@@ -1,7 +1,5 @@
 import pandas as pd
-import numpy as np
 import urllib.request
-from sklearn.model_selection import train_test_split
 
 
 ###############################################################################
@@ -20,21 +18,39 @@ dropped_features = [
                     "Case Disposition",
                     "Priority",
                     "Subdivision",
-                    "Call Date/Time',
+#                    "Call Date/Time',
                     "Entry Date/Time",
                     "Dispatch Date/Time",
                     "En Route Date/Time",
                     "On Scene Date/Time",
                     "Close Date/Time",
-                    "Location"
+#                    "Location"
                     ]
 
 # Features that will be One Hot Encoded
-cat_features = ["Zone"]
+cat_features = [
+#                    "Incident Number", 
+#                    "Report Number",
+#                    "Call Type",
+#                    "Zone"
+#                    "Case Disposition",
+#                    "Priority",
+#                    "Subdivision",
+#                    "Call Date/Time',
+#                    "Entry Date/Time",
+#                    "Dispatch Date/Time",
+#                    "En Route Date/Time",
+#                    "On Scene Date/Time",
+#                    "Close Date/Time",
+#                    "Location"
+                    ]
 
 ###############################################################################
 ####################### Do not modify code past this ##########################
 ###############################################################################
+if len(set(dropped_features) & set(cat_features)) != 0:
+    print("Warning: some features are tagged to be both dropped and One Hot Encoded")
+
 
 #Load in data, downloading datafile if necessary
 try:
@@ -63,8 +79,8 @@ if "Call Date/Time" not in dropped_features:
         month.append(d.split("/",3)[0])
         year.append(d.split("/", 3)[2].split(" ")[0])
         
-    for time in data["Call Date/Time"]:
-        separateDate(str(time))
+    for date_time in data["Call Date/Time"]:
+        separateDate(str(date_time))
     
     data.drop(["Call Date/Time"], axis=1, inplace=True)
     
@@ -82,21 +98,22 @@ rows_to_drop = set()
 for index, row in data.iterrows():
     if "Case Disposition" not in dropped_features:
         if row["Case Disposition"] == "No Report":
-            rows_to_drop.append(index)
+            rows_to_drop.add(index)
     
     if "Call Date/Time" not in dropped_features:
         if row["Call_Year"] == 1899:
-            rows_to_drop.append(index)
+            rows_to_drop.add(index)
                 
     if "Priority" not in dropped_features:
         if row["Priority"] == "E":
-            rows_to_drop.append(index)
+            rows_to_drop.add(index)
+    
+    if "Zone" not in dropped_features:
+        if row["Zone"] == "UNK":
+            rows_to_drop.add(index)
 
 data.drop(rows_to_drop, axis=0, inplace=True)
-
-if "Call Date/Time" not in dropped_features:
-    # We only needed year to determine missing dates, so we can drop it now
-    data.drop(["Call_Year"], axis = 1, inplace=True)
+data.dropna(inplace=True)
 
 # Do One Hot Encoding
 print("Performing One Hot Encoding")
